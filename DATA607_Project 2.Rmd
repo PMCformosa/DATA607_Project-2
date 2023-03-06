@@ -1,0 +1,135 @@
+---
+title: "DATA607_Project2"
+author: "Pei-Ming Chen"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(dplyr)
+library(ggplot2)
+```
+
+### Dataset- Income 
+
+The database contains 32,000 records on US Household Income Statistics & Geo Locations. The field description of the database is available on Kaggle.com. Income is a vital element when determining both quality and socioeconomic features of a given geographic location. The uploaded data was derived from over +36,000 files and covers 348,893 location records.
+
+Importing the Data
+
+```{r }
+HI <- "https://raw.githubusercontent.com/PMCformosa/DATA607_Project-2/main/kaggle_income.csv"
+
+Household_Income <- read.csv(file = HI, header =TRUE, sep=",")
+head(Household_Income)
+```
+
+
+About the Dataset
+The dataset was taken from Kaggle.com which was originally taken from an article called "US Household Income Statistics" Datasets
+https://www.kaggle.com/datasets/goldenoakresearch/us-household-income-stats-geo-locations
+
+```{r}
+glimpse(Household_Income)
+
+```
+
+Data Wrangling
+```{r}
+colnames(Household_Income)
+```
+
+```{r}
+colnames(Household_Income) <- c("Location_ID", "State_Code","State_Name","Abb_State_name","County", "City ", "Geo_location","Type","Primary","Zip_Code", "Area_Code","Area_Square","Water_area","Mean_H_Income","Sd_H_Income","Mean", "Median", "Stdev" , "sum_w" )
+colnames(Household_Income) 
+
+```
+
+```{r}
+glimpse(Household_Income)
+```
+
+```{r}
+summary(Household_Income)
+
+DF_H_Income <- Household_Income %>% as_tibble()
+
+DF_H_Income
+
+```
+
+### Reshaping dataset
+
+ Columns of County, Geo_location, and Type are collapsed into one column named Location and nother one with values on called District_type. Also , Area_Square, Water_area, Zip_Code are collapsed into the columns called Area and Area_size. The whole data frame looks much cleaner and consolidated.  
+
+```{r}
+DF_H_Income2 <- DF_H_Income %>%  pivot_longer(
+    cols = c(County,Geo_location, Type, Primary), 
+    names_to = "Location", 
+    values_to = "District_type")
+
+```
+
+
+```{r}
+DF_H_Income3 <- DF_H_Income2 %>%  pivot_longer(
+    cols = c(Area_Square, Water_area, Zip_Code), 
+    names_to = "Area", 
+    values_to = "Area_size")
+
+DF_H_Income3 
+```
+
+Counting possible missing Values 
+```{r}
+sum(is.na(DF_H_Income3)) 
+```
+
+### Plot the graph of average income of each state
+
+Significantl , the highest average income is observed in California state 
+```{r}
+ggplot(DF_H_Income3, aes(x=Mean, y=Abb_State_name)) + geom_col()
+```
+The relationship of size of Area and its income level is shown in the graph below. 
+```{r}
+Household_Income %>% 
+ggplot(aes(x = Area_Square, y = Mean)) +
+  geom_point(color= "purple")
+```
+
+Puerto rico was chose to study here for its relatively low mean value in income . Its area-sdize and income relashionship is shown below. 
+```{r}
+PR_data <- DF_H_Income3[DF_H_Income3$State_Name == 'Puerto Rico' ,]
+PR_data
+
+summary(PR_data)
+
+PR_dataB <- PR_data[order(PR_data$Mean, decreasing = TRUE),]
+
+PR3 <- select(PR_dataB, "Mean")
+PR3
+
+ggplot(PR_data, aes(x = Area_size, y= Mean)) + geom_point(color="blue")
+
+```
+
+
+```{r}
+CA_data <- DF_H_Income3[DF_H_Income3$State_Name == 'California' ,]
+CA_data 
+
+summary(CA_data)
+
+CA_data2 <- CA_data[order(CA_data$Mean, decreasing = TRUE),]
+CA_data2
+
+CA3 <- select(CA_data2, "Mean")
+CA3
+
+ggplot(CA_data, aes(x = Area_size, y= Mean )) + geom_point(color="green")
+```
+
